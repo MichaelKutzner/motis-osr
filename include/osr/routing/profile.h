@@ -3,6 +3,7 @@
 #include <concepts>
 #include <string_view>
 
+#include "osr/routing/sharing_data.h"
 #include "osr/types.h"
 #include "osr/ways.h"
 
@@ -31,34 +32,30 @@ concept IsEntry =
       { entry.update(label, node, cost, node) } -> std::same_as<bool>;
     };
 
-template <typename T>
+template <typename T, typename F = decltype([] {})>
 concept IsProfile =
     IsNode<typename T::node, typename T::key> &&
     IsLabel<typename T::label, typename T::node> &&
     IsEntry<typename T::entry, typename T::node, typename T::label> &&
-    requires(T profile) {
-      T::resolve_start_node(osr::ways::routing(), osr::way_idx_t(),
-                            osr::node_idx_t(), osr::level_t(), osr::direction(),
-                            [](T::node) {});
-      T::resolve_all(osr::ways::routing(), osr::node_idx_t(), osr::level_t(),
-                     [](T::node) {});
-      // T::adjacent<osr::direction(), bool()>(
-      //     osr::ways::routing(), typename T::node(),
-      //     new osr::bitvec<osr::node_idx_t>(), nullptr, []() {});
-      // [](auto Dir, auto B, auto Fn) {
-      //   T::adjacent<Dir, B, Fn>(osr::ways::routing(), typename T::node(),
-      //                           new osr::bitvec<osr::node_idx_t>(), nullptr,
-      //                           Fn);
-      // };
-      // [](auto Dir, auto B, auto Fn) {
-      //   T::adjacent<Dir, B, Fn>(osr::ways::routing(), typename T::entry(),
-      //                           new osr::bitvec<osr::node_idx_t>(), nullptr,
-      //                           Fn);
-      // };
-      // T::adjacent<osr::direction(), bool()>(
-      //     osr::ways::routing(), typename T::node(), nullptr, nullptr, []()
-      //     {});
-    };
+    std::invocable<decltype(T::template resolve_start_node<F>),
+                   ways::routing,
+                   way_idx_t,
+                   node_idx_t,
+                   level_t,
+                   direction,
+                   F> &&
+    std::invocable<decltype(T::template resolve_all<F>),
+                   ways::routing,
+                   node_idx_t,
+                   level_t,
+                   F> &&
+    std::invocable<
+        decltype(T::template adjacent<osr::direction::kBackward, true, F>),
+        osr::ways::routing,
+        typename T::node,
+        bitvec<node_idx_t>*,
+        sharing_data*,
+        F>;
 
 enum class search_profile : std::uint8_t {
   kFoot,
