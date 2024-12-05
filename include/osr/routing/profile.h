@@ -56,7 +56,10 @@ concept IsProfile =
         typename Profile::node const,
         bitvec<node_idx_t> const*,
         sharing_data const*,
-        F>;
+        F> &&
+      requires(Profile p) {
+        { Profile::way_cost(std::declval<way_properties>(), std::declval<direction>(), std::uint16_t()) } -> std::same_as<cost_t>;
+      };
 
 enum class search_profile : std::uint8_t {
   kFoot,
