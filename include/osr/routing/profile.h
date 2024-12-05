@@ -32,29 +32,30 @@ concept IsEntry =
       { entry.update(label, node, cost, node) } -> std::same_as<bool>;
     };
 
-template <typename T, typename F = decltype([] {})>
+template <typename Profile, typename F = decltype([] {})>
 concept IsProfile =
-    IsNode<typename T::node, typename T::key> &&
-    IsLabel<typename T::label, typename T::node> &&
-    IsEntry<typename T::entry, typename T::node, typename T::label> &&
-    std::invocable<decltype(T::template resolve_start_node<F>),
+    IsNode<typename Profile::node, typename Profile::key> &&
+    IsLabel<typename Profile::label, typename Profile::node> &&
+    IsEntry<typename Profile::entry, typename Profile::node, typename Profile::label> &&
+    std::invocable<decltype(Profile::template resolve_start_node<F>),
                    ways::routing,
                    way_idx_t,
                    node_idx_t,
                    level_t,
                    direction,
                    F> &&
-    std::invocable<decltype(T::template resolve_all<F>),
+    std::invocable<decltype(Profile::template resolve_all<F>),
                    ways::routing,
                    node_idx_t,
                    level_t,
                    F> &&
+    // std::invocable<decltype(T::way_cost)> &&
     std::invocable<
-        decltype(T::template adjacent<osr::direction::kBackward, true, F>),
-        osr::ways::routing,
-        typename T::node,
-        bitvec<node_idx_t>*,
-        sharing_data*,
+        decltype(Profile::template adjacent<osr::direction::kBackward, true, F>),
+        osr::ways::routing const,
+        typename Profile::node const,
+        bitvec<node_idx_t> const*,
+        sharing_data const*,
         F>;
 
 enum class search_profile : std::uint8_t {
