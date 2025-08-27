@@ -28,7 +28,7 @@
 #include "osr/routing/profiles/car_sharing.h"
 #include "osr/routing/profiles/foot.h"
 #include "osr/routing/route.h"
-#include "osr/routing/route2.h"
+#include "osr/routing/route_helper.h"
 #include "osr/routing/with_profile.h"
 
 using namespace net;

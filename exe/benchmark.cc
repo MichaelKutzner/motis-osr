@@ -27,7 +27,7 @@
 #include "osr/routing/profiles/car.h"
 #include "osr/routing/profiles/foot.h"
 #include "osr/routing/route.h"
-#include "osr/routing/route2.h"
+#include "osr/routing/route_helper.h"
 #include "osr/types.h"
 #include "osr/ways.h"
 
