@@ -282,12 +282,12 @@ struct car_parking {
   }
 
   template <typename Fn>
-  void resolve_start_node(ways::routing const& w,
+  static void resolve_start_node(ways::routing const& w,
                                  way_idx_t const way,
                                  node_idx_t const n,
                                  level_t lvl,
                                  direction search_dir,
-                                 Fn&& f) const {
+                                 Fn&& f) {
     auto const way_properties = w.way_properties_[way];
     search_dir == direction::kForward
         ? car::resolve_start_node(

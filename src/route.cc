@@ -552,7 +552,7 @@ std::optional<path> route_bidirectional(Profile const& pr,
     auto const start_way = start.way_;
     for (auto const* nc : {&start.left_, &start.right_}) {
       if (nc->valid() && nc->cost_ < max) {
-        pr.resolve_start_node(
+        Profile::resolve_start_node(
             *w.r_, start.way_, nc->node_, from.lvl_, dir, [&](auto const node) {
               auto label = typename Profile::label{node, nc->cost_};
               label.track(label, *w.r_, start_way, node.get_node(), false);
@@ -577,7 +577,7 @@ std::optional<path> route_bidirectional(Profile const& pr,
       auto const end_way = end.way_;
       for (auto const* nc : {&end.left_, &end.right_}) {
         if (nc->valid() && nc->cost_ < max) {
-          pr.resolve_start_node(
+          Profile::resolve_start_node(
               *w.r_, end_way, nc->node_, to.lvl_, opposite(dir),
               [&](auto const node) {
                 auto label = typename Profile::label{node, nc->cost_};
@@ -649,7 +649,7 @@ std::optional<path> route_dijkstra(Profile const& pr,
 
     for (auto const* nc : {&start.left_, &start.right_}) {
       if (nc->valid() && nc->cost_ < max) {
-        pr.resolve_start_node(
+        Profile::resolve_start_node(
             *w.r_, start.way_, nc->node_, from.lvl_, dir,
             [&](auto const node) { d.add_start(pr, w, {node, nc->cost_}); });
       }
@@ -709,7 +709,7 @@ std::vector<std::optional<path>> route(
     auto const start_way = start.way_;
     for (auto const* nc : {&start.left_, &start.right_}) {
       if (nc->valid() && nc->cost_ < max) {
-        pr.resolve_start_node(
+        Profile::resolve_start_node(
             *w.r_, start.way_, nc->node_, from.lvl_, dir, [&](auto const node) {
               auto label = typename Profile::label{node, nc->cost_};
               label.track(label, *w.r_, start_way, node.get_node(), false);

@@ -269,7 +269,7 @@ private:
       return false;
     }
     auto found = false;
-    pr.resolve_start_node(*ways_.r_, wc.way_, node_idx, query.lvl_,
+    Profile::resolve_start_node(*ways_.r_, wc.way_, node_idx, query.lvl_,
                                 reverse ? opposite(search_dir) : search_dir,
                                 [&](auto const) { found = true; });
     return found;
