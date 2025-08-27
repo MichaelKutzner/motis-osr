@@ -14,8 +14,8 @@ struct sharing_data;
 template <bool IsWheelchair, typename Tracking = noop_tracking>
 struct foot {
   static constexpr auto const kMaxMatchDistance = 100U;
-  static constexpr auto const kSpeedMetersPerSecond =
-      (IsWheelchair ? 0.8F : 1.2F);
+  // static constexpr auto const kSpeedMetersPerSecond =
+  //     (IsWheelchair ? 0.8F : 1.2F);
 
   struct node {
     friend bool operator==(node const a, node const b) {
@@ -150,12 +150,12 @@ struct foot {
   }
 
   template <direction SearchDir, bool WithBlocked, typename Fn>
-  static void adjacent(ways::routing const& w,
+  void adjacent(ways::routing const& w,
                        node const n,
                        bitvec<node_idx_t> const* blocked,
                        sharing_data const*,
                        elevation_storage const*,
-                       Fn&& fn, routing_parameters const rp) {
+                       Fn&& fn) const {
     for (auto const [way, i] :
          utl::zip_unchecked(w.node_ways_[n.n_], w.node_in_way_idx_[n.n_])) {
       auto const expand = [&](direction const way_dir, std::uint16_t const from,
@@ -174,7 +174,7 @@ struct foot {
         }
 
         auto const target_way_prop = w.way_properties_[way];
-        if (way_cost(target_way_prop, way_dir, 0U, rp) == kInfeasible) {
+        if (way_cost(target_way_prop, way_dir, 0U) == kInfeasible) {
           return;
         }
 
@@ -182,7 +182,7 @@ struct foot {
           for_each_elevator_level(
               w, target_node, [&](level_t const target_lvl) {
                 auto const dist = w.way_node_dist_[way][std::min(from, to)];
-                auto const cost = way_cost(target_way_prop, way_dir, dist, rp) +
+                auto const cost = way_cost(target_way_prop, way_dir, dist) +
                                   node_cost(target_node_prop);
                 fn(node{target_node, target_lvl},
                    static_cast<std::uint32_t>(cost), dist, way, from, to,
@@ -195,7 +195,7 @@ struct foot {
           }
 
           auto const dist = w.way_node_dist_[way][std::min(from, to)];
-          auto const cost = way_cost(target_way_prop, way_dir, dist, rp) +
+          auto const cost = way_cost(target_way_prop, way_dir, dist) +
                             node_cost(target_node_prop);
           fn(node{target_node, *target_lvl}, static_cast<std::uint32_t>(cost),
              dist, way, from, to, elevation_storage::elevation{}, false);
@@ -211,14 +211,13 @@ struct foot {
     }
   }
 
-  static bool is_dest_reachable(ways::routing const& w,
+  bool is_dest_reachable(ways::routing const& w,
                                 node const n,
                                 way_idx_t const way,
                                 direction const way_dir,
-                                direction,
-                                   routing_parameters const rp) {
+                                direction) const {
     auto const target_way_prop = w.way_properties_[way];
-    if (way_cost(target_way_prop, way_dir, 0U, rp) == kInfeasible) {
+    if (way_cost(target_way_prop, way_dir, 0U) == kInfeasible) {
       return false;
     }
 
@@ -314,33 +313,32 @@ struct foot {
     return it->second;
   }
 
-  static constexpr cost_t way_cost(way_properties const e,
+  constexpr cost_t way_cost(way_properties const e,
                                    direction,
-                                   std::uint16_t const dist,
-                                   routing_parameters const rp) {
-    [[maybe_unused]] auto const speed = rp.speed_;
+                                   std::uint16_t const dist) const {
     if ((e.is_foot_accessible() ||
          (!e.is_sidewalk_separate() && e.is_bike_accessible())) &&
         (!IsWheelchair || !e.is_steps())) {
       return (!e.is_foot_accessible() || e.is_sidewalk_separate() ? 90 : 0) +
              static_cast<cost_t>(std::round(
-                 dist / (speed + (e.is_big_street_ ? -0.2 : 0) +
+                 dist / (speed_ + (e.is_big_street_ ? -0.2 : 0) +
                          (e.motor_vehicle_no_ ? 0.1 : 0.0))));
     } else {
       return kInfeasible;
     }
   }
 
-  static constexpr cost_t node_cost(node_properties const n) {
+  constexpr cost_t node_cost(node_properties const n) const {
     return n.is_walk_accessible() ? (n.is_elevator() ? 90U : 0U) : kInfeasible;
   }
 
-  static constexpr double heuristic(double const dist, routing_parameters const rp) {
-    [[maybe_unused]] auto const speed = rp.speed_;
-    return dist / (speed + 0.1);
+  constexpr double heuristic(double const dist) const {
+    return dist / (speed_ + 0.1);
   }
 
   static constexpr node get_reverse(node const n) { return n; }
+
+  double const speed_ = {IsWheelchair ? 0.8F : 1.2F};
 };
 
 }  // namespace osr

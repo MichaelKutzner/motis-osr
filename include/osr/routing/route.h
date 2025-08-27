@@ -17,10 +17,10 @@ namespace osr {
 
 struct ways;
 
-template <typename Profile>
+template <IsProfile Profile>
 struct dijkstra;
 
-template <typename Profile>
+template <IsProfile Profile>
 struct bidirectional;
 
 struct sharing_data;
@@ -47,11 +47,27 @@ struct path {
   node_idx_t track_node_{node_idx_t::invalid()};
 };
 
-template <typename Profile>
+template <IsProfile Profile>
 bidirectional<Profile>& get_bidirectional();
 
-template <typename Profile>
+template <IsProfile Profile>
 dijkstra<Profile>& get_dijkstra();
+
+std::vector<std::optional<path>> route(
+    IsProfile auto pr,
+    ways const&,
+    lookup const&,
+    location const& from,
+    std::vector<location> const& to,
+    cost_t max,
+    direction,
+    double max_match_distance,
+    bitvec<node_idx_t> const* blocked = nullptr,
+    sharing_data const* sharing = nullptr,
+    elevation_storage const* = nullptr,
+    std::function<bool(path const&)> const& do_reconstruct = [](path const&) {
+      return false;
+    });
 
 std::vector<std::optional<path>> route(
     ways const&,
@@ -62,13 +78,26 @@ std::vector<std::optional<path>> route(
     cost_t max,
     direction,
     double max_match_distance,
-  routing_parameters,
     bitvec<node_idx_t> const* blocked = nullptr,
     sharing_data const* sharing = nullptr,
     elevation_storage const* = nullptr,
     std::function<bool(path const&)> const& do_reconstruct = [](path const&) {
       return false;
     });
+
+std::optional<path> route(IsProfile auto pr,
+                          ways const&,
+                          lookup const&,
+                          location const& from,
+                          location const& to,
+                          cost_t max,
+                          direction,
+                          double max_match_distance,
+                          bitvec<node_idx_t> const* blocked = nullptr,
+                          sharing_data const* sharing = nullptr,
+                          elevation_storage const* = nullptr,
+                          routing_algorithm = routing_algorithm::kDijkstra
+                          );
 
 std::optional<path> route(ways const&,
                           lookup const&,
@@ -78,7 +107,6 @@ std::optional<path> route(ways const&,
                           cost_t max,
                           direction,
                           double max_match_distance,
-  routing_parameters,
                           bitvec<node_idx_t> const* blocked = nullptr,
                           sharing_data const* sharing = nullptr,
                           elevation_storage const* = nullptr,
@@ -95,7 +123,6 @@ std::vector<std::optional<path>> route(
     std::vector<match_t> const& to_match,
     cost_t const max,
     direction const,
-  routing_parameters,
     bitvec<node_idx_t> const* blocked = nullptr,
     sharing_data const* sharing = nullptr,
     elevation_storage const* = nullptr,
@@ -112,7 +139,6 @@ std::optional<path> route(ways const& w,
                           match_view_t to_match,
                           cost_t const max,
                           direction const dir,
-  routing_parameters,
                           bitvec<node_idx_t> const* blocked = nullptr,
                           sharing_data const* sharing = nullptr,
                           elevation_storage const* = nullptr,

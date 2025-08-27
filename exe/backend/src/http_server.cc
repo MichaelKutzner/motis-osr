@@ -28,6 +28,7 @@
 #include "osr/routing/profiles/car_sharing.h"
 #include "osr/routing/profiles/foot.h"
 #include "osr/routing/route.h"
+#include "osr/routing/route2.h"
 #include "osr/routing/with_profile.h"
 
 using namespace net;
@@ -132,16 +133,21 @@ struct http_server::impl {
         max_it == q.end() ? 3600 : max_it->value().as_int64());
     auto const foot_speed_result =
         q.try_at("footSpeed")->try_to_number<float>();
-    auto const foot_speed = foot_speed_result.has_value()
-                                ? foot_speed_result.value()
-                                : osr::foot<false>::kSpeedMetersPerSecond;
-    auto const rp = routing_parameters{foot_speed};
+    auto const pr = foot_speed_result.has_value()
+      ? foot<false>{.speed_ = foot_speed_result.value()}
+      : foot<false>{};
 
-    auto const p = route(w_, l_, profile, from, to, max, dir, 100, rp, nullptr,
+    auto const p = profile == search_profile::kFoot
+        ? route(pr, w_, l_, from, to, max, dir, 100, nullptr,
+                         nullptr, elevations_, routing_algo)
+        : route(w_, l_, profile, from, to, max, dir, 100, nullptr,
                          nullptr, elevations_, routing_algo);
 
-    auto const p1 = route(w_, l_, profile, from, std::vector{to}, max, dir, 100,
-                          rp, nullptr, nullptr, elevations_);
+    auto const p1 = profile == search_profile::kFoot
+        ? route(pr, w_, l_, from, std::vector{to}, max, dir, 100,
+                          nullptr, nullptr, elevations_)
+      : route(w_, l_, profile, from, std::vector{to}, max, dir, 100,
+                          nullptr, nullptr, elevations_);
 
     auto const print = [](char const* name, std::optional<path> const& p) {
       if (p.has_value()) {
