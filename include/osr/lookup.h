@@ -100,7 +100,7 @@ struct lookup {
                                                double max_match_distance) const;
 
   template <IsProfile Profile>
-  match_t complete_match(Profile pr,
+  match_t complete_match(Profile const& pr,
       location const& query,
       bool const reverse,
       direction const search_dir,
@@ -184,7 +184,7 @@ struct lookup {
                     raw_way_candidates = std::nullopt) const;
 
   template <IsProfile Profile>
-  match_t match(Profile pr,
+  match_t match(Profile const& pr,
                 location const& query,
                 bool const reverse,
                 direction const search_dir,
@@ -224,7 +224,7 @@ struct lookup {
 
 private:
   template <IsProfile Profile>
-  match_t get_way_candidates(Profile pr,
+  match_t get_way_candidates(Profile const& pr,
                              location const& query,
                              bool const reverse,
                              direction const search_dir,
@@ -258,7 +258,7 @@ private:
   }
 
   template <IsProfile Profile>
-  bool is_way_node_feasible(Profile pr,
+  bool is_way_node_feasible(Profile const& pr,
                             way_candidate const& wc,
                             node_idx_t const node_idx,
                             location const& query,
@@ -276,7 +276,7 @@ private:
   }
 
   template <IsProfile Profile>
-  node_candidate find_next_node(Profile pr,
+  node_candidate find_next_node(Profile const& pr,
                                 way_candidate const& wc,
                                 location const& query,
                                 direction const dir,
@@ -344,7 +344,7 @@ private:
                                         size_t) const;
 
   template <IsProfile Profile>
-  void apply_next_node_cost(Profile pr,
+  void apply_next_node_cost(Profile const& pr,
                             way_candidate const& wc,
                             node_candidate& nc,
                             location const& query,

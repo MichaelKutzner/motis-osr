@@ -69,7 +69,7 @@ routing_algorithm to_algorithm(std::string_view s) {
 }
 
 template <direction SearchDir, bool WithBlocked, IsProfile Profile>
-connecting_way find_connecting_way(Profile pr,
+connecting_way find_connecting_way(Profile const& pr,
                                    ways const& w,
                                    ways::routing const& r,
                                    bitvec<node_idx_t> const* blocked,
@@ -105,7 +105,7 @@ connecting_way find_connecting_way(Profile pr,
 }
 
 template <IsProfile Profile>
-connecting_way find_connecting_way(Profile pr,
+connecting_way find_connecting_way(Profile const& pr,
                                    ways const& w,
                                    bitvec<node_idx_t> const* blocked,
                                    sharing_data const* sharing,
@@ -132,7 +132,7 @@ connecting_way find_connecting_way(Profile pr,
 }
 
 template <IsProfile Profile>
-double add_path(Profile pr,
+double add_path(Profile const& pr,
                 ways const& w,
                 ways::routing const& r,
                 bitvec<node_idx_t> const* blocked,
@@ -216,7 +216,7 @@ double add_path(Profile pr,
 }
 
 template <IsProfile Profile>
-path reconstruct_bi(Profile pr,
+path reconstruct_bi(Profile const& pr,
                     ways const& w,
                     lookup const& l,
                     bitvec<node_idx_t> const* blocked,
@@ -332,7 +332,7 @@ path reconstruct_bi(Profile pr,
 }
 
 template <IsProfile Profile>
-path reconstruct(Profile pr,
+path reconstruct(Profile const& pr,
                  ways const& w,
                  lookup const& l,
                  bitvec<node_idx_t> const* blocked,
@@ -426,7 +426,7 @@ std::optional<std::tuple<node_candidate const*,
                          way_candidate const*,
                          typename Profile::node,
                          path>>
-best_candidate(Profile pr,
+best_candidate(Profile const& pr,
                ways const& w,
                dijkstra<Profile>& d,
                level_t const lvl,
@@ -517,7 +517,7 @@ std::optional<path> try_direct(osr::location const& from,
 }
 
 template <IsProfile Profile>
-std::optional<path> route_bidirectional(Profile pr,
+std::optional<path> route_bidirectional(Profile const& pr,
                                         ways const& w,
                                         lookup const& l,
                                         bidirectional<Profile>& b,
@@ -612,7 +612,7 @@ std::optional<path> route_bidirectional(Profile pr,
 }
 
 template <IsProfile Profile>
-std::optional<path> route_dijkstra(Profile pr,
+std::optional<path> route_dijkstra(Profile const& pr,
                                    ways const& w,
                                    lookup const& l,
                                    dijkstra<Profile>& d,
@@ -676,7 +676,7 @@ std::optional<path> route_dijkstra(Profile pr,
 
 template <IsProfile Profile>
 std::vector<std::optional<path>> route(
-  Profile pr,
+  Profile const& pr,
     ways const& w,
     lookup const& l,
     dijkstra<Profile>& d,
@@ -757,7 +757,7 @@ std::vector<std::optional<path>> route(
   return result;
 }
 
-std::optional<path> route_bidirectional(IsProfile auto pr,
+std::optional<path> route_bidirectional(IsProfile auto const& pr,
                                         ways const& w,
                                         lookup const& l,
                                         location const& from,
@@ -768,7 +768,7 @@ std::optional<path> route_bidirectional(IsProfile auto pr,
                                         bitvec<node_idx_t> const* blocked,
                                         sharing_data const* sharing,
                                         elevation_storage const* elevations) {
-  using Profile = decltype(pr);
+  using Profile = std::remove_cvref_t<decltype(pr)>;
         auto const from_match =
             l.match<Profile>(pr, from, false, dir, max_match_distance, blocked);
         auto const to_match =
@@ -803,7 +803,7 @@ std::optional<path> route_bidirectional(ways const& w,
 }
 
 std::vector<std::optional<path>> route(
-IsProfile auto pr,
+IsProfile auto const& pr,
     ways const& w,
     lookup const& l,
     location const& from,
@@ -815,7 +815,7 @@ IsProfile auto pr,
     sharing_data const* sharing,
     elevation_storage const* elevations,
     std::function<bool(path const&)> const& do_reconstruct) {
-  using Profile = decltype(pr);
+  using Profile = std::remove_cvref_t<decltype(pr)>;
         auto const from_match =
             l.match<Profile>(pr, from, false, dir, max_match_distance, blocked);
         if (from_match.empty()) {
@@ -849,7 +849,7 @@ std::vector<std::optional<path>> route(
       });
 }
 
-std::optional<path> route_dijkstra(IsProfile auto pr,
+std::optional<path> route_dijkstra(IsProfile auto const& pr,
                                    ways const& w,
                                    lookup const& l,
                                    location const& from,
@@ -860,7 +860,7 @@ std::optional<path> route_dijkstra(IsProfile auto pr,
                                    bitvec<node_idx_t> const* blocked,
                                    sharing_data const* sharing,
                                    elevation_storage const* elevations) {
-  using Profile = decltype(pr);
+  using Profile = std::remove_cvref_t<decltype(pr)>;
         auto const from_match =
             l.match<Profile>(pr, from, false, dir, max_match_distance, blocked);
         auto const to_match =
@@ -956,7 +956,7 @@ std::optional<path> route(ways const& w,
   throw utl::fail("not implemented");
 }
 
-std::optional<path> route(IsProfile auto pr,
+std::optional<path> route(IsProfile auto const& pr,
                           ways const& w,
                           lookup const& l,
                           location const& from,
@@ -1003,35 +1003,63 @@ std::optional<path> route(ways const& w,
   });
 }
 
-template
-std::vector<std::optional<path>> route(
-    foot<false, noop_tracking>pr,
-    ways const&,
-    lookup const&,
-    location const& from,
-    std::vector<location> const& to,
-    cost_t max,
-    direction,
-    double max_match_distance,
-    bitvec<node_idx_t> const* blocked,
-    sharing_data const* sharing,
-    elevation_storage const*,
-    std::function<bool(path const&)> const& do_reconstruct);
+template struct route_helper<foot<false, noop_tracking>>;
+template struct route_helper<foot<true, noop_tracking>>;
 
-template
-std::optional<path> route(
-    foot<false, noop_tracking>pr,
-                          ways const&,
-                          lookup const&,
-                          location const& from,
-                          location const& to,
-                          cost_t max,
-                          direction,
-                          double max_match_distance,
-                          bitvec<node_idx_t> const* blocked,
-                          sharing_data const* sharing,
-                          elevation_storage const*,
-                          routing_algorithm
-                          );
+// template
+// std::vector<std::optional<path>> route(
+//     IsProfile auto const&,
+//     // foot<false, noop_tracking>pr,
+//     ways const&,
+//     lookup const&,
+//     location const& from,
+//     std::vector<location> const& to,
+//     cost_t max,
+//     direction,
+//     double max_match_distance,
+//     bitvec<node_idx_t> const* blocked,
+//     sharing_data const* sharing,
+//     elevation_storage const*,
+//     std::function<bool(path const&)> const& do_reconstruct);
+//
+// template
+// std::optional<path> route(
+//     IsProfile auto const&,
+//     // foot<false, noop_tracking>pr,
+//                           ways const&,
+//                           lookup const&,
+//                           location const& from,
+//                           location const& to,
+//                           cost_t max,
+//                           direction,
+//                           double max_match_distance,
+//                           bitvec<node_idx_t> const* blocked,
+//                           sharing_data const* sharing,
+//                           elevation_storage const*,
+//                           routing_algorithm
+//                           );
+
+// template<IsProfile Profile>
+// inline constexpr void init_route() noexcept {
+//   [[maybe_unused]] auto const route_one_many = static_cast<std::vector<std::optional<path>> (*)(Profile const&, ways const&, lookup const&, location const&, std::vector<location> const&, cost_t, direction, double, bitvec<node_idx_t> const*, sharing_data const*, elevation_storage const*, std::function<bool(path const&)> const&)>(&route);
+//   [[maybe_unused]] auto const route_one_one = static_cast<std::optional<path> (*)(Profile const&, ways const&, lookup const&, location const&, location const&, cost_t, direction, double, bitvec<node_idx_t> const*, sharing_data const*, elevation_storage const*, routing_algorithm)>(&route);
+// }
+//
+// template <IsProfile... Profiles>
+// struct TypeList {};
+//
+// template <typename... Profiles>
+// constexpr void init_all(TypeList<Profiles...>) noexcept {
+// (init_route<Profiles>(), ...);
+// }
+//
+// using supported_types = TypeList<
+//     // foot<false, noop_tracking>,
+//     foot<true, noop_tracking>
+// >;
+//
+// constexpr void init_all() {
+//   init_all(supported_types{});
+// }
 
 }  // namespace osr
