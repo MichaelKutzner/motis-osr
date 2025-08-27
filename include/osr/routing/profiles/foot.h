@@ -338,7 +338,7 @@ struct foot {
 
   static constexpr node get_reverse(node const n) { return n; }
 
-  double const speed_ = {IsWheelchair ? 0.8F : 1.2F};
+  double const speed_ = {IsWheelchair ? 0.8 : 1.2};
 };
 
 }  // namespace osr

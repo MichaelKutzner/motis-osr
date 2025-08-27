@@ -15,7 +15,6 @@
 #include "osr/location.h"
 #include "osr/lookup.h"
 #include "osr/routing/profile.h"
-#include "osr/routing/profiles/bike.h"
 #include "osr/routing/route.h"
 #include "osr/types.h"
 #include "osr/ways.h"

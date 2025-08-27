@@ -140,7 +140,6 @@ struct lookup {
     return matches;
   }
 
-  template <IsProfile Profile>
   std::vector<geo::latlng> get_node_candidate_path(
       way_candidate const& wc,
       node_candidate const& nc,
