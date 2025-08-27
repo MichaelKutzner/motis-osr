@@ -1,4 +1,5 @@
 #include "osr/routing/route.h"
+#include "osr/routing/route2.h"
 
 #include <cstdint>
 #include <algorithm>
@@ -1005,61 +1006,21 @@ std::optional<path> route(ways const& w,
 
 template struct route_helper<foot<false, noop_tracking>>;
 template struct route_helper<foot<true, noop_tracking>>;
-
-// template
-// std::vector<std::optional<path>> route(
-//     IsProfile auto const&,
-//     // foot<false, noop_tracking>pr,
-//     ways const&,
-//     lookup const&,
-//     location const& from,
-//     std::vector<location> const& to,
-//     cost_t max,
-//     direction,
-//     double max_match_distance,
-//     bitvec<node_idx_t> const* blocked,
-//     sharing_data const* sharing,
-//     elevation_storage const*,
-//     std::function<bool(path const&)> const& do_reconstruct);
-//
-// template
-// std::optional<path> route(
-//     IsProfile auto const&,
-//     // foot<false, noop_tracking>pr,
-//                           ways const&,
-//                           lookup const&,
-//                           location const& from,
-//                           location const& to,
-//                           cost_t max,
-//                           direction,
-//                           double max_match_distance,
-//                           bitvec<node_idx_t> const* blocked,
-//                           sharing_data const* sharing,
-//                           elevation_storage const*,
-//                           routing_algorithm
-//                           );
-
-// template<IsProfile Profile>
-// inline constexpr void init_route() noexcept {
-//   [[maybe_unused]] auto const route_one_many = static_cast<std::vector<std::optional<path>> (*)(Profile const&, ways const&, lookup const&, location const&, std::vector<location> const&, cost_t, direction, double, bitvec<node_idx_t> const*, sharing_data const*, elevation_storage const*, std::function<bool(path const&)> const&)>(&route);
-//   [[maybe_unused]] auto const route_one_one = static_cast<std::optional<path> (*)(Profile const&, ways const&, lookup const&, location const&, location const&, cost_t, direction, double, bitvec<node_idx_t> const*, sharing_data const*, elevation_storage const*, routing_algorithm)>(&route);
-// }
-//
-// template <IsProfile... Profiles>
-// struct TypeList {};
-//
-// template <typename... Profiles>
-// constexpr void init_all(TypeList<Profiles...>) noexcept {
-// (init_route<Profiles>(), ...);
-// }
-//
-// using supported_types = TypeList<
-//     // foot<false, noop_tracking>,
-//     foot<true, noop_tracking>
-// >;
-//
-// constexpr void init_all() {
-//   init_all(supported_types{});
-// }
+template struct route_helper<foot<false, elevator_tracking>>;
+template struct route_helper<foot<true, elevator_tracking>>;
+template struct route_helper<bike<bike_costing::kFast, kElevationNoCost>>;
+template struct route_helper<bike<bike_costing::kSafe, kElevationNoCost>>;
+template struct route_helper<bike<bike_costing::kFast, kElevationLowCost>>;
+template struct route_helper<bike<bike_costing::kSafe, kElevationLowCost>>;
+template struct route_helper<bike<bike_costing::kFast, kElevationHighCost>>;
+template struct route_helper<bike<bike_costing::kSafe, kElevationHighCost>>;
+template struct route_helper<bike_sharing>;
+template struct route_helper<car>;
+template struct route_helper<car_parking<true, true>>;
+template struct route_helper<car_parking<false, true>>;
+template struct route_helper<car_parking<true, false>>;
+template struct route_helper<car_parking<false, false>>;
+template struct route_helper<car_sharing<noop_tracking>>;
+template struct route_helper<car_sharing<elevator_tracking>>;
 
 }  // namespace osr

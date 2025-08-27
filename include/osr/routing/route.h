@@ -144,12 +144,4 @@ std::optional<path> route(ways const& w,
                           elevation_storage const* = nullptr,
                           routing_algorithm = routing_algorithm::kDijkstra);
 
-// Contains pointers to template functions
-// Used to allow explicit template instantiation
-template <IsProfile Profile>
-struct route_helper {
-  static constexpr auto const route_one_many = static_cast<std::vector<std::optional<path>> (*)(Profile const&, ways const&, lookup const&, location const&, std::vector<location> const&, cost_t, direction, double, bitvec<node_idx_t> const*, sharing_data const*, elevation_storage const*, std::function<bool(path const&)> const&)>(&route);
-  static constexpr auto const route_one_one = static_cast<std::optional<path> (*)(Profile const&, ways const&, lookup const&, location const&, location const&, cost_t, direction, double, bitvec<node_idx_t> const*, sharing_data const*, elevation_storage const*, routing_algorithm)>(&route);
-};
-
 }  // namespace osr
