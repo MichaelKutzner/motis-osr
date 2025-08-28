@@ -34,46 +34,43 @@ concept IsEntry =
       { entry.update(label, node, cost, node) } -> std::same_as<bool>;
     };
 
-// template <typename Profile, typename F = decltype([] {})>
 template <typename Profile>
 concept IsProfile =
     IsNode<typename Profile::node, typename Profile::key> &&
     IsLabel<typename Profile::label, typename Profile::node> &&
     IsEntry<typename Profile::entry,
             typename Profile::node,
-            typename Profile::label> 
-;
-// &&
-//     std::invocable<decltype(Profile::template resolve_start_node<F>),
-//                    ways::routing,
-//                    way_idx_t,
-//                    node_idx_t,
-//                    level_t,
-//                    direction,
-//                    F> &&
-//     std::invocable<decltype(Profile::template resolve_all<F>),
-//                    ways::routing,
-//                    node_idx_t,
-//                    level_t,
-//                    F> &&
-//     // std::invocable<decltype(T::way_cost)> &&
-//     std::invocable<
-//         decltype(Profile::
-//                      template adjacent<osr::direction::kBackward, true, F>),
-//         osr::ways::routing const,
-//         typename Profile::node const,
-//         bitvec<node_idx_t> const*,
-//         sharing_data const*,
-//         elevation_storage const*,
-//         F,
-//         routing_parameters> &&
-//     requires(Profile p) {
-//       {
-//         Profile::way_cost(std::declval<way_properties>(),
-//                           std::declval<direction>(), std::uint16_t(),
-//                           std::declval<routing_parameters>())
-//       } -> std::same_as<cost_t>;
-//     };
+            typename Profile::label> &&
+    std::invocable<decltype(Profile::template resolve_start_node<std::function<void(typename Profile::node)>>),
+                   ways::routing const&,
+                   way_idx_t const,
+                   node_idx_t const,
+                   level_t const,
+                   direction,
+                   std::function<void(typename Profile::node)>> &&
+    // std::invocable<decltype(Profile::template resolve_all<std::function<void(typename Profile::node)>>),
+    //                ways::routing,
+    //                node_idx_t,
+    //                level_t,
+    //                std::function<void(typename Profile::node)>> &&
+    // std::invocable<decltype(T::way_cost)> &&
+    std::invocable<
+        decltype(Profile::
+                     template adjacent<osr::direction::kBackward, true, std::function<void(typename Profile::node)>>),
+        osr::ways::routing const,
+        typename Profile::node const,
+        bitvec<node_idx_t> const*,
+        sharing_data const*,
+        elevation_storage const*,
+        std::function<void(typename Profile::node)>> &&
+    requires(Profile p) {
+      {
+        p.way_cost(std::declval<way_properties>(),
+                          std::declval<direction>(), std::uint16_t())
+        // Profile::way_cost(std::declval<way_properties>(),
+        //                   std::declval<direction>(), std::uint16_t())
+      } -> std::same_as<cost_t>;
+    };
 // TODO: is_dest_reachable, heuristic
 
 enum class search_profile : std::uint8_t {

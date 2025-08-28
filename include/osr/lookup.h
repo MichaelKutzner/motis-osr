@@ -19,7 +19,6 @@
 
 #include "osr/location.h"
 #include "osr/routing/profile.h"
-#include "osr/routing/is_profile.h"
 #include "osr/types.h"
 
 namespace osr {

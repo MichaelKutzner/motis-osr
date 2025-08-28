@@ -14,7 +14,7 @@
 #include "osr/routing/sharing_data.h"
 #include "osr/types.h"
 #include "osr/ways.h"
-#include "osr/routing/is_profile.h"
+#include "osr/routing/profile.h"
 
 // #include "osr/routing/route.h"
 
