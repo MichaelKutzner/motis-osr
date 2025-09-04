@@ -110,14 +110,14 @@ match_t lookup::match(profile_parameters const& params,
                       direction const search_dir,
                       double const max_match_distance,
                       bitvec<node_idx_t> const* blocked,
-                      search_profile const p,
+                      [[maybe_unused]] search_profile const p,
                       std::optional<std::span<raw_way_candidate const>>
                           raw_way_candidates) const {
-  return with_profile(p, [&]<IsProfile Profile>(Profile&&) {
-    return match<Profile>(std::get<typename Profile::parameters>(params), query,
-                          reverse, search_dir, max_match_distance, blocked,
-                          raw_way_candidates);
-  });
+  return with_profile(
+      params, [&]<IsProfile Profile>(Profile&&, Profile::parameters const& pp) {
+        return match<Profile>(pp, query, reverse, search_dir,
+                              max_match_distance, blocked, raw_way_candidates);
+      });
 }
 
 hash_set<node_idx_t> lookup::find_elevators(geo::box const& b) const {

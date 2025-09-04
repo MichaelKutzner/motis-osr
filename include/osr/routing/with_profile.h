@@ -1,5 +1,6 @@
 #pragma once
 
+#include "osr/routing/parameters.h"
 #include "osr/routing/profile.h"
 #include "osr/routing/profiles/bike.h"
 #include "osr/routing/profiles/bike_sharing.h"
@@ -36,6 +37,15 @@ auto with_profile(search_profile const p, Fn&& fn) {
       return fn(car_sharing<track_node_tracking>{});
   }
   throw utl::fail("with_profile not implemented for {}", to_str(p));
+}
+
+template <typename Fn>
+auto with_profile(profile_parameters const& params, Fn&& fn) {
+  return std::visit(
+      [&]<IsProfileParameters Parameters>(Parameters const& pp) {
+        return fn(typename Parameters::profile_t{}, pp);
+      },
+      params);
 }
 
 }  // namespace osr
