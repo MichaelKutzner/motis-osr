@@ -41,11 +41,9 @@ auto with_profile(search_profile const p, Fn&& fn) {
 
 template <typename Fn>
 auto with_profile(profile_parameters const& params, Fn&& fn) {
-  return std::visit(
-      [&]<IsProfileParameters Parameters>(Parameters const& pp) {
-        return fn(typename Parameters::profile_t{}, pp);
-      },
-      params);
+  return std::visit([&]<IsProfileParameters Parameters>(
+                        Parameters const& pp) { return fn(pp); },
+                    params);
 }
 
 }  // namespace osr

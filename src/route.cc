@@ -779,8 +779,9 @@ std::optional<path> route_bidirectional(
     elevation_storage const* elevations) {
   return with_profile(
       params,
-      [&]<IsProfile Profile>(
-          Profile&&, Profile::parameters const& pp) -> std::optional<path> {
+      [&]<IsProfileParameters Parameters>(
+          Parameters const& pp) -> std::optional<path> {
+        using Profile = Parameters::profile_t;
         auto const from_match =
             l.match<Profile>(pp, from, false, dir, max_match_distance, blocked);
         auto const to_match =
@@ -812,8 +813,9 @@ std::vector<std::optional<path>> route(
     std::function<bool(path const&)> const& do_reconstruct) {
   return with_profile(
       params,
-      [&]<IsProfile Profile>(Profile&&, Profile::parameters const& pp)
-          -> std::vector<std::optional<path>> {
+      [&]<IsProfileParameters Parameters>(
+          Parameters const& pp) -> std::vector<std::optional<path>> {
+        using Profile = Parameters::profile_t;
         auto const from_match =
             l.match<Profile>(pp, from, false, dir, max_match_distance, blocked);
         if (from_match.empty()) {
@@ -844,8 +846,9 @@ std::optional<path> route_dijkstra(
     elevation_storage const* elevations) {
   return with_profile(
       params,
-      [&]<IsProfile Profile>(
-          Profile&&, Profile::parameters const& pp) -> std::optional<path> {
+      [&]<IsProfileParameters Parameters>(
+          Parameters const& pp) -> std::optional<path> {
+        using Profile = Parameters::profile_t;
         auto const from_match =
             l.match<Profile>(pp, from, false, dir, max_match_distance, blocked);
         auto const to_match =
@@ -880,10 +883,10 @@ std::vector<std::optional<path>> route(
     return std::vector<std::optional<path>>(to.size());
   }
   return with_profile(
-      params, [&]<IsProfile Profile>(Profile&&, Profile::parameters const& pp) {
-        return route(pp, w, l, get_dijkstra<Profile>(), from, to, from_match,
-                     to_match, max, dir, blocked, sharing, elevations,
-                     do_reconstruct);
+      params, [&]<IsProfileParameters Parameters>(Parameters const& pp) {
+        return route(pp, w, l, get_dijkstra<typename Parameters::profile_t>(),
+                     from, to, from_match, to_match, max, dir, blocked, sharing,
+                     elevations, do_reconstruct);
       });
 }
 
@@ -912,21 +915,19 @@ std::optional<path> route(profile_parameters const& params,
 
   switch (algo) {
     case routing_algorithm::kDijkstra:
-      return with_profile(
-          params,
-          [&]<IsProfile Profile>(Profile&&, Profile::parameters const& pp) {
-            return route_dijkstra(pp, w, l, get_dijkstra<Profile>(), from, to,
-                                  from_match, to_match, max, dir, blocked,
-                                  sharing, elevations);
-          });
+      return with_profile(params, [&]<IsProfileParameters Parameters>(
+                                      Parameters const& pp) {
+        return route_dijkstra(
+            pp, w, l, get_dijkstra<typename Parameters::profile_t>(), from, to,
+            from_match, to_match, max, dir, blocked, sharing, elevations);
+      });
     case routing_algorithm::kAStarBi:
-      return with_profile(
-          params,
-          [&]<IsProfile Profile>(Profile&&, Profile::parameters const& pp) {
-            return route_bidirectional(pp, w, l, get_bidirectional<Profile>(),
-                                       from, to, from_match, to_match, max, dir,
-                                       blocked, sharing, elevations);
-          });
+      return with_profile(params, [&]<IsProfileParameters Parameters>(
+                                      Parameters const& pp) {
+        return route_bidirectional(
+            pp, w, l, get_bidirectional<typename Parameters::profile_t>(), from,
+            to, from_match, to_match, max, dir, blocked, sharing, elevations);
+      });
   }
   throw utl::fail("not implemented");
 }
