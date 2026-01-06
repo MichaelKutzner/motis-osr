@@ -8,8 +8,11 @@
 #include "utl/pipes/iota.h"
 #include "utl/pipes/transform.h"
 #include "utl/pipes/vec.h"
+#include "utl/zip.h"
 
 #include "geo/rad_deg.h"
+
+#include "fmt/format.h"
 
 #include "osr/routing/dijkstra.h"
 #include "osr/routing/parameters.h"
@@ -18,7 +21,6 @@
 #include "osr/routing/profiles/car_sharing.h"
 #include "osr/routing/profiles/foot.h"
 #include "osr/types.h"
-#include "utl/zip.h"
 
 namespace osr {
 
@@ -33,66 +35,72 @@ template <bool IsWheelchair, typename Tracking>
 void set_start(dijkstra<foot<IsWheelchair, Tracking>>& d,
                ways const& w,
                node_idx_t const start,
+               cost_t cost,
                level_t const lvl) {
-  d.add_start(w,
-              typename foot<IsWheelchair, Tracking>::label{
-                  typename foot<IsWheelchair, Tracking>::node{start, lvl}, 0U});
+  d.add_start(
+      w, typename foot<IsWheelchair, Tracking>::label{
+             typename foot<IsWheelchair, Tracking>::node{start, lvl}, cost});
 }
 
 template <bike_costing Costing, unsigned int UpCost, unsigned int Exp>
 void set_start(dijkstra<bike<Costing, UpCost, Exp>>& d,
                ways const& w,
                node_idx_t const start,
+               cost_t cost,
                level_t const) {
   d.add_start(w, typename bike<Costing, UpCost, Exp>::label{
                      typename bike<Costing, UpCost, Exp>::node{
                          start, direction::kForward},
-                     0U});
+                     cost});
   d.add_start(w, typename bike<Costing, UpCost, Exp>::label{
                      typename bike<Costing, UpCost, Exp>::node{
                          start, direction::kBackward},
-                     0U});
+                     cost});
 }
 
 void set_start(dijkstra<bike_sharing>& d,
                ways const& w,
                node_idx_t const start,
+               cost_t cost,
                level_t const lvl) {
   d.add_start(
       w, typename bike_sharing::label{
              typename bike_sharing::node{start, bike_sharing::node_type{}, lvl},
-             0U});
+             cost});
 }
 
 void set_start(dijkstra<car>& d,
                ways const& w,
                node_idx_t const start,
+               cost_t cost,
                level_t const) {
-  d.add_start(w, car::label{car::node{start, 0, direction::kForward}, 0U});
-  d.add_start(w, car::label{car::node{start, 0, direction::kBackward}, 0U});
+  d.add_start(w, car::label{car::node{start, 0, direction::kForward}, cost});
+  d.add_start(w, car::label{car::node{start, 0, direction::kBackward}, cost});
 };
 
 template <typename Tracking>
 void set_start(dijkstra<car_sharing<Tracking>>& d,
                ways const& w,
                node_idx_t const start,
+               cost_t cost,
                level_t const lvl) {
   d.add_start(w, typename car_sharing<Tracking>::label{
                      typename car_sharing<Tracking>::node{
                          start, typename car_sharing<Tracking>::node_type{},
                          lvl, direction::kForward, 0U},
-                     0U});
+                     cost});
   d.add_start(w, typename car_sharing<Tracking>::label{
                      typename car_sharing<Tracking>::node{
                          start, typename car_sharing<Tracking>::node_type{},
                          lvl, direction::kBackward, 0U},
-                     0U});
+                     cost});
 };
 
 template <bool IsWheelchair, bool UseParking>
 void set_start(dijkstra<car_parking<IsWheelchair, UseParking>>& d,
                ways const& w,
                node_idx_t const start,
+               cost_t cost,
                level_t const lvl) {
   d.add_start(
       w, typename car_parking<IsWheelchair, UseParking>::label{
@@ -100,14 +108,14 @@ void set_start(dijkstra<car_parking<IsWheelchair, UseParking>>& d,
                  start,
                  typename car_parking<IsWheelchair, UseParking>::node_type{},
                  lvl, direction::kForward, 0U},
-             0U});
+             cost});
   d.add_start(
       w, typename car_parking<IsWheelchair, UseParking>::label{
              typename car_parking<IsWheelchair, UseParking>::node{
                  start,
                  typename car_parking<IsWheelchair, UseParking>::node_type{},
                  lvl, direction::kBackward, 0U},
-             0U});
+             cost});
 };
 
 template <typename T>
@@ -228,20 +236,38 @@ vec<H3Index> isochrones_h3(profile_parameters const& parameters,
                            double const max_matching_dist,
                            int const resolution,
                            bool const nodes_only) {
+  return isochrones_h3(parameters, w, l, {loc}, {0}, max_cost,
+                       max_matching_dist, resolution, nodes_only);
+}
+
+vec<H3Index> isochrones_h3(profile_parameters const& parameters,
+                           ways const& w,
+                           lookup const& l,
+                           std::vector<location> const& locs,
+                           std::vector<cost_t> const& offset_costs,
+                           cost_t const max_cost,
+                           double const max_matching_dist,
+                           int const resolution,
+                           bool const nodes_only) {
+  utl::verify(locs.size() == offset_costs.size(),
+              "locs.size() != offset_costs.size()");
   return std::visit(
       [&](ProfileParameters auto const& params) -> vec<H3Index> {
         using P = std::remove_cvref_t<decltype(params)>::profile_t;
         auto d = dijkstra<P>{};
         d.reset(max_cost);
-        auto const starts = static_cast<match_t>(
-            l.match<P>(params, loc, false, direction::kForward,
-                       max_matching_dist, nullptr));
-        for (auto const& start : starts) {
-          if (start.left_.valid()) {
-            set_start(d, w, start.left_.node_, start.left_.lvl_);
-          }
-          if (start.right_.valid()) {
-            set_start(d, w, start.right_.node_, start.right_.lvl_);
+        for (auto const [loc, offset_cost] : utl::zip(locs, offset_costs)) {
+          auto const starts = static_cast<match_t>(
+              l.match<P>(params, loc, false, direction::kForward,
+                         max_matching_dist, nullptr));
+          for (auto const& start : starts) {
+            if (start.left_.valid()) {
+              set_start(d, w, start.left_.node_, offset_cost, start.left_.lvl_);
+            }
+            if (start.right_.valid()) {
+              set_start(d, w, start.right_.node_, offset_cost,
+                        start.right_.lvl_);
+            }
           }
         }
         d.run(params, w, *w.r_, max_cost, nullptr, nullptr, nullptr,
@@ -264,5 +290,15 @@ vec<H3Index> isochrones_h3(profile_parameters const& parameters,
       parameters);
 }
 
-}  // namespace osr
+std::string to_string(vec<H3Index> const& h3s) {
+  auto ss = std::stringstream{};
+  for (auto const [i, idx] : utl::enumerate(h3s)) {
+    if (i != 0) {
+      ss << ", ";
+    }
+    ss << fmt::format("{:X}", idx);
+  }
+  return ss.str();
+}
 
+}  // namespace osr

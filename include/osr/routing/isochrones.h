@@ -12,9 +12,25 @@ constexpr auto const kH3Resolution = 11;
 
 H3Index to_h3(point const&, int resolution);
 
-vec<H3Index> isochrones_h3(profile_parameters const&, ways const& w,
-                           lookup const& l, location const&, cost_t max_cost,
-                           double max_matching_dist, int resolution,
+vec<H3Index> isochrones_h3(profile_parameters const&,
+                           ways const& w,
+                           lookup const& l,
+                           location const&,
+                           cost_t max_cost,
+                           double max_matching_dist,
+                           int resolution,
                            bool nodes_only = true);
+
+vec<H3Index> isochrones_h3(profile_parameters const&,
+                           ways const& w,
+                           lookup const& l,
+                           std::vector<location> const&,
+                           std::vector<cost_t> const&,
+                           cost_t max_cost,
+                           double max_matching_dist,
+                           int resolution,
+                           bool nodes_only = true);
+
+std::string to_string(vec<H3Index> const&);
 
 }  // namespace osr
