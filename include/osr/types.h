@@ -1,7 +1,9 @@
 #pragma once
 
 #include <cinttypes>
+#include <cmath>
 #include <filesystem>
+#include <limits>
 
 #include "utl/for_each_bit_set.h"
 
@@ -162,10 +164,12 @@ struct level_t {
   explicit constexpr level_t(std::uint8_t const x) : v_{x} {}
 
   explicit constexpr level_t(float const f)
-      : v_{static_cast<std::uint8_t>((f - kMinLevel) / 0.25F + 1U)} {}
+      : v_{static_cast<decltype(v_)>(
+            std::isnan(f) ? kNoLevel : (f - kMinLevel) / 0.25F + 1U)} {}
 
   constexpr float to_float() const {
-    return (v_ == kNoLevel) ? 0.0F : (kMinLevel + ((v_ - 1U) / 4.0F));
+    return (v_ == kNoLevel) ? std::numeric_limits<float>::quiet_NaN()
+                            : (kMinLevel + ((v_ - 1U) / 4.0F));
   }
 
   constexpr level_t() = default;
